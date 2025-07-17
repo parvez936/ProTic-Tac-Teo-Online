@@ -173,7 +173,9 @@
 
     // --- INITIALIZE APP ---
     try {
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
     } catch (e) {
         console.error("Firebase initialization failed:", e);
         document.getElementById('loading-screen').innerHTML = '<h1>Error</h1><p>Could not connect to the game server.</p>';
@@ -232,11 +234,9 @@
         listeners.users = usersRef.on('value', snap => {
             if (!snap.exists()) return;
             const usersData = snap.val();
-            // Clear player cache on update to get fresh data like online status
             for (const key in usersData) { playerInfoCache[key] = usersData[key]; }
             sortedUsersCache = Object.values(usersData).sort((a, b) => (b.stats?.wins || 0) - (a.stats?.wins || 0));
             updateLobbyStats();
-            // If leaderboard screen is active, update it
             if (document.getElementById('leaderboard-screen').classList.contains('active')) {
                 updateLeaderboardUI('full-leaderboard-list', sortedUsersCache.slice(0, 100));
             }
@@ -393,9 +393,15 @@
         const gameRef = db.ref(`games/${gameId}`);
         listeners.game = gameRef.on('value', snap => {
             const gameState = snap.val();
-            if (!gameState) { handleGameEndByLeave(); return; }
-            if (gameState.status === 'ongoing') { updateGameUI(gameState); }
-            else if (!document.querySelector('.animation-screen.active')) { handleGameOver(gameState); }
+            if (!gameState) {
+                handleGameEndByLeave();
+                return;
+            }
+            if (gameState.status === 'ongoing') {
+                updateGameUI(gameState);
+            } else if (!document.querySelector('.animation-screen.active')) {
+                handleGameOver(gameState);
+            }
         });
     }
 
@@ -489,10 +495,12 @@
         showScreen('lobby-screen');
     }
 
+    // MODIFIED: This function no longer updates stats to prevent double counting.
     function handleGameEndByLeave() {
         if (!document.getElementById('game-screen').classList.contains('active')) return;
-        alert("Opponent left or the game was deleted. You win by default!");
-        db.ref(`users/${currentUser.uid}/stats/wins`).set(firebase.database.ServerValue.increment(1));
+        // The win is awarded by the other player's `confirm-leave-btn` logic.
+        // This function just informs the remaining player and cleans their UI.
+        alert("The game has ended because your opponent left.");
         cleanUpAfterGame();
     }
 
@@ -534,6 +542,7 @@
         const friendDataPromises = friendUids.map(uid => getPlayerInfo(uid));
         const friendsData = await Promise.all(friendDataPromises);
         friendsData.forEach(friendData => {
+            if(!friendData) return; // Skip if friend data is not available for some reason
             const onlineStatus = friendData.online ? 'online' : '';
             friendList.innerHTML += `
                 <li>
@@ -566,7 +575,7 @@
     function declineFriendRequest(senderUid) { db.ref(`users/${currentUser.uid}/friendRequests/${senderUid}`).remove(); }
 
     function removeFriend(friendUid) {
-        if (!confirm("Are you sure?")) return;
+        if (!confirm("Are you sure you want to remove this friend?")) return;
         db.ref(`users/${currentUser.uid}/friends/${friendUid}`).remove();
         db.ref(`users/${friendUid}/friends/${currentUser.uid}`).remove();
     }
@@ -604,16 +613,14 @@
         return "Just now";
     };
 
-    // --- SETUP ALL BUTTON EVENT LISTENERS ---
+    // --- SETUP ALL BUTTON EVENT LISTENERS (Centralized) ---
     function setupButtonEventListeners() {
-        // Auth
         document.getElementById('login-btn').onclick = () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e));
         };
         document.getElementById('logout-btn').onclick = () => auth.signOut();
 
-        // Navigation
         document.getElementById('game-play-now-btn').onclick = async () => {
             showScreen('matchmaking-screen');
             const queueRef = db.ref('matchmakingQueue');
@@ -634,6 +641,7 @@
             db.ref(`matchmakingQueue/${currentUser.uid}`).remove();
             showScreen('lobby-screen');
         };
+        
         document.getElementById('profile-btn').onclick = showProfilePage;
         document.getElementById('full-leaderboard-btn').onclick = () => {
             updateLeaderboardUI('full-leaderboard-list', sortedUsersCache.slice(0, 100));
@@ -644,7 +652,6 @@
         document.getElementById('back-to-lobby-from-friends').onclick = () => showScreen('lobby-screen');
         document.getElementById('back-to-lobby-from-leaderboard').onclick = () => showScreen('lobby-screen');
 
-        // Profile Editing
         document.getElementById('save-profile-btn').onclick = () => {
             const newName = document.getElementById('edit-name-input').value.trim();
             if (newName) db.ref(`users/${currentUser.uid}`).update({ displayName: newName }).then(() => alert('Profile updated!'));
@@ -665,14 +672,12 @@
                 }).catch(err => { console.error(err); alert("Upload failed."); showPopup('image-upload-popup', false); });
         };
         
-        // Friend Actions
         document.getElementById('add-friend-by-uid-btn').onclick = () => {
             const uid = document.getElementById('add-friend-uid-input').value.trim();
             if (uid) sendFriendRequest(uid);
             document.getElementById('add-friend-uid-input').value = '';
         };
 
-        // Game Actions
         document.getElementById('leave-game-btn').onclick = () => showPopup('leave-confirm-popup');
         document.getElementById('cancel-leave-btn').onclick = () => showPopup('leave-confirm-popup', false);
         document.getElementById('confirm-leave-btn').onclick = () => {
@@ -681,12 +686,15 @@
             gameRef.once('value').then(snap => {
                 const gs = snap.val(); if (!gs) return;
                 const opponentUid = currentUser.uid === gs.playerX ? gs.playerO : gs.playerX;
+                // This client awards the win to the opponent and loss to self.
                 db.ref(`users/${opponentUid}/stats/wins`).set(firebase.database.ServerValue.increment(1));
                 db.ref(`users/${currentUser.uid}/stats/losses`).set(firebase.database.ServerValue.increment(1));
-            }).then(() => gameRef.remove());
+            }).then(() => {
+                // After updating stats, remove the game. The other player's client will just clean up.
+                gameRef.remove();
+            });
         };
 
-        // Social Links
         document.querySelector('.social-telegram').href = socialLinks.telegram;
         document.querySelector('.social-facebook').href = socialLinks.facebook;
         document.querySelector('.social-youtube').href = socialLinks.youtube;
@@ -694,8 +702,8 @@
     }
 
     // --- INITIALIZE THE APPLICATION ---
-    setupButtonEventListeners();
+    document.addEventListener('DOMContentLoaded', setupButtonEventListeners);
 
     </script>
 </body>
-                                                                                                                                                                                                                                                                       </html>
+</html>
