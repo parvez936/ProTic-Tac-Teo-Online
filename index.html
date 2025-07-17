@@ -201,30 +201,76 @@
     };
 
     // --- AUTHENTICATION & DATA LISTENERS ---
-    auth.onAuthStateChanged(user => {
+    
+    // ## CHANGE 2 START: New function to generate a unique numeric UID ##
+    async function generateUniqueNumericUid() {
+        let numericUid;
+        let isUnique = false;
+        while (!isUnique) {
+            // Generate a 10-digit number as a string
+            numericUid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+            const userRef = db.ref(`users/${numericUid}`);
+            const snapshot = await userRef.once('value');
+            if (!snapshot.exists()) {
+                isUnique = true;
+            }
+        }
+        return numericUid;
+    }
+    
+    // ## CHANGE 2: Modified auth state observer to handle custom numeric UIDs ##
+    auth.onAuthStateChanged(async user => {
         detachAllListeners();
         if (user) {
-            currentUser = user;
-            const userRef = db.ref(`users/${user.uid}`);
+            const authUid = user.uid; // Original Firebase Auth UID
+            const mappingRef = db.ref(`authUidToCustomUid/${authUid}`);
+            let customUid;
+
+            const mappingSnapshot = await mappingRef.once('value');
+
+            if (mappingSnapshot.exists()) {
+                customUid = mappingSnapshot.val();
+            } else {
+                // First-time login for this Google account. Generate and map a new UID.
+                customUid = await generateUniqueNumericUid();
+                await mappingRef.set(customUid);
+            }
+
+            // The main user object for the app. Uses the custom numeric UID.
+            currentUser = {
+                authUid: authUid,
+                uid: customUid, // This custom UID will be used throughout the app
+                displayName: user.displayName,
+                photoURL: user.photoURL
+            };
             
+            const userRef = db.ref(`users/${currentUser.uid}`);
+
             userRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP, isPlaying: null })
-                .then(() => db.ref(`matchmakingQueue/${user.uid}`).remove());
+                .then(() => db.ref(`matchmakingQueue/${currentUser.uid}`).remove());
 
             userRef.once('value').then(snap => {
-                const updates = { online: true, displayName: user.displayName, photoURL: user.photoURL, uid: user.uid };
+                const updates = {
+                    online: true,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    uid: currentUser.uid // Ensure the custom UID is stored in the user's profile
+                };
                 if (!snap.exists() || !snap.val().stats) {
                     updates.stats = { wins: 0, losses: 0, draws: 0 };
                 }
                 userRef.update(updates).then(() => {
-                    attachAllListeners();
+                    attachAllListeners(); // Listeners will now use the correct currentUser object
                     showScreen('lobby-screen');
                 });
             });
+
         } else {
             currentUser = null;
             showScreen('auth-screen');
         }
     });
+
 
     function attachAllListeners() {
         if (!currentUser) return;
@@ -289,6 +335,7 @@
 
     // --- LOBBY, STATS, LEADERBOARD & PROFILE ---
     function updateLobbyStats() {
+        if(!currentUser) return;
         document.getElementById('total-players-stat').textContent = sortedUsersCache.length;
         document.getElementById('online-players-stat').textContent = sortedUsersCache.filter(u => u.online).length;
         document.getElementById('offline-players-stat').textContent = sortedUsersCache.length - sortedUsersCache.filter(u => u.online).length;
@@ -452,16 +499,21 @@
         }
         return false;
     };
-
+    
+    // ## CHANGE 1 START: Modified function to prevent win count bug ##
     async function handleGameOver(gs) {
         if (listeners.game && currentGameId) {
             db.ref(`games/${currentGameId}`).off('value', listeners.game);
             delete listeners.game;
         }
-        if (!gs.statsUpdated) {
+
+        // Only playerX's client will update the stats to prevent a race condition.
+        if (currentUser.uid === gs.playerX && !gs.statsUpdated) {
             updateStats(gs);
+            // Mark stats as updated to prevent any other client from running it again.
             await db.ref(`games/${currentGameId}`).update({ statsUpdated: true });
         }
+        
         let animId = 'draw-animation';
         if (gs.status !== 'draw') {
             const amIWinner = (gs.winner === 'X' && currentUser.uid === gs.playerX) || (gs.winner === 'O' && currentUser.uid === gs.playerO);
@@ -473,6 +525,7 @@
             cleanUpAfterGame();
         }, 2500);
     }
+    // ## CHANGE 1 END ##
 
     function updateStats(gs) {
         const pXRef = db.ref(`users/${gs.playerX}/stats`);
@@ -495,7 +548,6 @@
         showScreen('lobby-screen');
     }
 
-    // MODIFIED: This function no longer updates stats to prevent double counting.
     function handleGameEndByLeave() {
         if (!document.getElementById('game-screen').classList.contains('active')) return;
         // The win is awarded by the other player's `confirm-leave-btn` logic.
@@ -706,4 +758,4 @@
 
     </script>
 </body>
-</html>
+                                                                                                                                                                                                        </html>
