@@ -35,9 +35,6 @@
         .leaderboard-list, .friends-list-ul, .requests-list-ul { list-style: none; padding: 0; width: 100%; max-height: 250px; overflow-y: auto; text-align: left; }
         .leaderboard-list li, .friends-list-ul li, .requests-list-ul li { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); transition: background-color 0.3s; }
         .leaderboard-list li:hover, .friends-list-ul li:hover, .requests-list-ul li:hover { background-color: rgba(0, 246, 255, 0.1); }
-        .leaderboard-list li.rank-1 { border-left: 5px solid #FFD700; background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent); } 
-        .leaderboard-list li.rank-2 { border-left: 5px solid #C0C0C0; background: linear-gradient(90deg, rgba(192,192,192,0.1), transparent); } 
-        .leaderboard-list li.rank-3 { border-left: 5px solid #CD7F32; background: linear-gradient(90deg, rgba(205,127,50,0.1), transparent); }
         .list-item-img { width: 40px; height: 40px; border-radius: 50%; margin-right: 15px; }
         .list-item-rank { font-size: 1.2rem; color: var(--secondary-glow); width: 40px; font-weight: bold; text-align: center; }
         .list-item-name { flex-grow: 1; }
@@ -47,11 +44,15 @@
         .profile-header img:hover { box-shadow: var(--glow-cyan); }
         .profile-header p { font-size: 0.8rem; opacity: 0.8; word-break: break-all; }
         .profile-header p span, .profile-header p strong { color: var(--primary-glow); opacity: 1; font-weight: normal;}
+        /* MODIFIED: Added styles for badges */
+        .profile-badge, .list-item-badge { font-size: 1.5rem; margin-left: 10px; }
+        h2 .profile-badge { font-size: 1.8rem; vertical-align: middle;}
+        .list-item-name { display: flex; align-items: center; }
         .social-links { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
         .social-links a { font-size: 2.2rem; color: var(--text-color); transition: all 0.3s ease; }
         .social-links a:hover { color: var(--primary-glow); transform: scale(1.2); }
         footer { position: fixed; bottom: 10px; left: 0; right: 0; font-size: 0.9rem; z-index: 100; text-align: center;}
-        footer a { color: var(--secondary-glow); text-decoration: none; text-shadow: var(--glow-magenta); }
+        footer a { color: var(--secondary-glow); text-decoration: none; text-shadow: var(--magenta-glow); }
         #game-players { display: flex; justify-content: space-between; width: 100%; max-width: 320px; padding: 10px; background: var(--container-bg); border-radius: 10px; }
         .player-box { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; padding: 5px; border-radius: 5px; transition: background-color 0.3s; }
         .player-box:hover { background-color: rgba(0, 246, 255, 0.1); }
@@ -61,7 +62,7 @@
         #game-board { display: grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap: 10px; position: relative; }
         .cell { background-color: #261447; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 4rem; cursor: pointer; }
         .cell.X { color: var(--primary-glow); text-shadow: var(--glow-cyan); animation: pop-in 0.3s; }
-        .cell.O { color: var(--secondary-glow); text-shadow: var(--glow-magenta); animation: pop-in 0.3s; }
+        .cell.O { color: var(--secondary-glow); text-shadow: var(--magenta-glow); animation: pop-in 0.3s; }
         @keyframes pop-in { from { transform: scale(0.1); } to { transform: scale(1); } }
         .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s; }
         .popup-overlay.active { display: flex; }
@@ -96,13 +97,15 @@
             <div class="card profile-header"><img id="lobby-user-photo" src=""><h2 id="lobby-user-name"></h2><button id="profile-btn" class="btn-secondary" style="padding: 5px 15px; font-size: 0.8rem;">View Profile</button></div>
             <div class="card"><h3>Player Statistics</h3><div class="stats-grid"><div>Total<span id="total-players-stat">0</span></div><div>Online<span id="online-players-stat">0</span></div><div>Offline<span id="offline-players-stat">0</span></div></div></div>
             <div class="button-group"><button id="game-play-now-btn" class="btn" style="font-size: 1.2rem;">Play Now</button><button id="my-friends-btn" class="btn" style="position: relative; font-size: 1.2rem;">My Friends <span id="friend-request-badge">0</span></button></div>
-            <div class="card"><h3>🏆 Leaderboard</h3><ul id="leaderboard-list" class="leaderboard-list"></ul><button id="full-leaderboard-btn" style="width:100%; margin-top:10px;">View Full Leaderboard</button></div>
+            <!-- MODIFIED: Removed the leaderboard list from lobby -->
+            <div class="card"><button id="full-leaderboard-btn" style="width:100%;">View Full Leaderboard</button></div>
             <div class="card"><h3>Game Update Now, Join!</h3><div class="social-links"><a href="#" class="social-telegram"><i class="fab fa-telegram"></i></a><a href="#" class="social-facebook"><i class="fab fa-facebook"></i></a><a href="#" class="social-youtube"><i class="fab fa-youtube"></i></a><a href="#" class="social-instagram"><i class="fab fa-instagram"></i></a></div></div>
         </div>
         
         <!-- Screen: Profile -->
         <div id="profile-screen" class="screen">
-            <div class="card profile-header"><img id="profile-photo" src="" title="Click to change photo"><h2 id="profile-name-display"></h2><p>Rank: <strong id="profile-rank">N/A</strong></p><p>UID: <span id="profile-uid"></span></p><p>Last seen: <span id="profile-last-seen"></span></p></div>
+            <!-- MODIFIED: Added a span for the badge -->
+            <div class="card profile-header"><img id="profile-photo" src="" title="Click to change photo"><h2><span id="profile-name-display"></span><span id="profile-badge" class="profile-badge"></span></h2><p>Rank: <strong id="profile-rank">N/A</strong></p><p>UID: <span id="profile-uid"></span></p><p>Last seen: <span id="profile-last-seen"></span></p></div>
             <div class="card"><h3>My Stats</h3><div class="stats-grid"><div>Wins<span id="profile-wins">0</span></div><div>Losses<span id="profile-losses">0</span></div><div>Draws<span id="profile-draws">0</span></div></div></div>
             <div class="card"><h3>Edit Profile</h3><input type="text" id="edit-name-input" placeholder="Enter new name"><button id="save-profile-btn" style="width:100%; margin-top: 10px;">Save Changes</button></div>
             <div style="display:flex; width:100%; gap:10px;"><button id="back-to-lobby-from-profile" class="btn-secondary" style="flex-grow:1">Back</button><button id="logout-btn" style="flex-grow:1">Logout</button></div>
@@ -120,7 +123,7 @@
 
         <!-- Screen: Leaderboard -->
         <div id="leaderboard-screen" class="screen">
-            <div class="card" style="width:100%;"><h2 style="margin-bottom: 15px;">🏆 Global Leaderboard</h2><ul id="full-leaderboard-list" class="leaderboard-list" style="max-height: 450px;"></ul></div>
+            <div class="card" style="width:100%;"><h2 style="margin-bottom: 15px;">🏆 Global Leaderboard</h2><ul id="full-leaderboard-list" class="leaderboard-list" style="max-height: 450px; overflow-y: auto;"></ul></div>
             <button id="back-to-lobby-from-leaderboard" class="btn-secondary" style="width:100%;">Back to Lobby</button>
         </div>
 
@@ -185,7 +188,7 @@
     // --- GLOBAL STATE ---
     let currentUser = null;
     let currentGameId = null;
-    let listeners = {}; // Object to hold all listeners
+    let listeners = {};
     let sortedUsersCache = [];
     let myFriendsCache = {};
 
@@ -200,21 +203,15 @@
         if (popup) popup.classList.toggle('active', show);
     }
 
-    // --- AUTHENTICATION ---
+    // --- AUTHENTICATION & LISTENERS ---
     auth.onAuthStateChanged(user => {
-        detachAllListeners(); // Clear old listeners before proceeding
+        detachAllListeners();
         if (user) {
             currentUser = user;
             const userRef = db.ref(`users/${user.uid}`);
-            
-            userRef.onDisconnect().update({ 
-                online: false, 
-                lastSeen: firebase.database.ServerValue.TIMESTAMP, 
-                isPlaying: null 
-            }).then(() => {
+            userRef.onDisconnect().update({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP, isPlaying: null }).then(() => {
                 db.ref(`matchmakingQueue/${user.uid}`).remove();
             });
-
             userRef.once('value').then(snap => {
                 const updates = { online: true, displayName: user.displayName, photoURL: user.photoURL, uid: user.uid };
                 if (!snap.exists() || !snap.val().stats) {
@@ -231,20 +228,14 @@
         }
     });
 
-    // --- LISTENER MANAGEMENT ---
     function attachAllListeners() {
         if (!currentUser) return;
         const uid = currentUser.uid;
-        
-        // Listener for all user data (for leaderboard, stats)
         listeners.users = db.ref('users').orderByChild('stats/wins').on('value', snap => {
             if (!snap.exists()) return;
             sortedUsersCache = Object.values(snap.val()).sort((a, b) => (b.stats?.wins || 0) - (a.stats?.wins || 0));
             updateLobbyStats();
-            updateLeaderboardUI('leaderboard-list', sortedUsersCache.slice(0, 5));
         });
-
-        // Listen for when a game is assigned to me
         listeners.myGame = db.ref(`users/${uid}/isPlaying`).on('value', snap => {
             const gameId = snap.val();
             if (gameId) {
@@ -253,8 +244,6 @@
                 listenToGame(gameId);
             }
         });
-
-        // Friend system listeners
         listeners.friendRequests = db.ref(`users/${uid}/friendRequests`).on('value', snap => updateFriendRequestUI(snap.val() || {}));
         listeners.myFriends = db.ref(`users/${uid}/friends`).on('value', async snap => {
             const friendUids = snap.val() ? Object.keys(snap.val()) : [];
@@ -262,19 +251,14 @@
             friendUids.forEach(friendUid => myFriendsCache[friendUid] = true);
             updateFriendsListUI(friendUids);
         });
-
-        // Listener for game challenges from friends
         listeners.gameInvites = db.ref(`gameInvites/${uid}`).on('value', snap => {
             const invite = snap.val();
-            if (invite) {
-                showChallengePopup(invite);
-            } else {
-                showPopup('challenge-popup', false);
-            }
+            if (invite) showChallengePopup(invite); else showPopup('challenge-popup', false);
         });
     }
 
     function detachAllListeners() {
+        Object.values(listeners).forEach(listener => listener.off());
         if (listeners.users) db.ref('users').off('value', listeners.users);
         if (currentUser) {
             const uid = currentUser.uid;
@@ -286,7 +270,7 @@
         listeners = {};
     }
 
-    // --- LOBBY AND STATS ---
+    // --- LOBBY, STATS, LEADERBOARD ---
     function updateLobbyStats() {
         const total = sortedUsersCache.length;
         const online = sortedUsersCache.filter(u => u.online).length;
@@ -300,22 +284,32 @@
         }
     }
     
-    // All other functions from the previous response are needed here.
-    // I will add them back in the final, complete script.
-    // This includes:
-    // - Full matchmaking logic
-    // - Full game logic (createGame, listenToGame, updateGameUI, handleCellClick, handleGameOver, cleanUpAfterGame, etc.)
-    // - Full friend system logic (UI updates, send/accept/decline requests)
-    // - Full profile logic (showing profile, editing name, uploading photo)
-    // - All event listeners for buttons
-    // - All helper functions (getPlayerInfo, checkWinner, formatTimeAgo)
-    //
-    // The following is the complete JS part, combining old and new logic.
-    
-    // --- COMPLETE JAVASCRIPT LOGIC ---
-    
-    // (This combines previous logic with the new robust structure)
-    // ... insert all functions here ...
+    // MODIFIED: New function for badges
+    function getRankBadge(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return ''; // No badge for others
+    }
+
+    // MODIFIED: Updated leaderboard UI function
+    function updateLeaderboardUI(elementId, users) {
+        const list = document.getElementById(elementId);
+        list.innerHTML = '';
+        users.forEach((u, index) => {
+            const rank = index + 1;
+            const badge = getRankBadge(rank);
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span class="list-item-rank">${rank}</span>
+                <img src="${u.photoURL}" class="list-item-img">
+                <div class="list-item-name">${u.displayName}<span class="list-item-badge">${badge}</span></div>
+                <span class="list-item-wins">${u.stats?.wins || 0} Wins</span>`;
+            list.appendChild(li);
+        });
+    }
+
+    // --- GAME & MATCHMAKING ---
     const playerInfoCache = {};
     async function getPlayerInfo(uid) {
         if (playerInfoCache[uid]) return playerInfoCache[uid];
@@ -325,29 +319,6 @@
         return info || { displayName: 'Unknown', photoURL: '' };
     }
     
-    // --- MATCHMAKING ---
-    document.getElementById('game-play-now-btn').addEventListener('click', async () => {
-        showScreen('matchmaking-screen');
-        const queueRef = db.ref('matchmakingQueue');
-        const snapshot = await queueRef.orderByKey().limitToFirst(1).once('value');
-        if (snapshot.exists()) {
-            const opponentUid = Object.keys(snapshot.val())[0];
-            if (opponentUid !== currentUser.uid) {
-                await queueRef.child(opponentUid).remove();
-                createGame(currentUser.uid, opponentUid);
-            } else {
-                await queueRef.child(currentUser.uid).set(true);
-            }
-        } else {
-            await queueRef.child(currentUser.uid).set(true);
-        }
-    });
-    document.getElementById('cancel-matchmaking-btn').addEventListener('click', () => {
-        db.ref(`matchmakingQueue/${currentUser.uid}`).remove();
-        showScreen('lobby-screen');
-    });
-
-    // --- GAME LOGIC ---
     function createGame(playerX_uid, playerO_uid, isChallenge = false) {
         const gameId = db.ref('games').push().key;
         const gameData = { playerX: playerX_uid, playerO: playerO_uid, board: Array(9).fill(""), turn: 'X', status: 'ongoing' };
@@ -454,21 +425,9 @@
     }
 
     // --- FRIEND SYSTEM ---
-    function setupFriendListeners() { /* Already handled in attachAllListeners */ }
-    async function updateFriendRequestUI(requests) { /* code from previous response */ }
-    async function updateFriendsListUI(friendUids) { /* code from previous response, with event listener for challenge */ }
-    async function sendFriendRequest(receiverUid) { /* code from previous response */ }
-    function acceptFriendRequest(senderUid) { /* code from previous response */ }
-    function declineFriendRequest(senderUid) { /* code from previous response */ }
-    function removeFriend(friendUid) { /* code from previous response */ }
-    
-    // Copying the implementations here
     async function updateFriendRequestUI(requests) {
-        const reqList = document.getElementById('requests-list');
-        const badge = document.getElementById('friend-request-badge');
-        if (Object.keys(requests).length === 0) {
-            reqList.innerHTML = '<li>No new requests.</li>'; badge.style.display = 'none'; return;
-        }
+        const reqList = document.getElementById('requests-list'); const badge = document.getElementById('friend-request-badge');
+        if (Object.keys(requests).length === 0) { reqList.innerHTML = '<li>No new requests.</li>'; badge.style.display = 'none'; return; }
         badge.textContent = Object.keys(requests).length; badge.style.display = 'block'; reqList.innerHTML = '';
         for (const senderUid in requests) {
             const senderData = await getPlayerInfo(senderUid);
@@ -483,13 +442,14 @@
         const friendList = document.getElementById('friends-list');
         if (friendUids.length === 0) { friendList.innerHTML = '<li>You have no friends yet.</li>'; return; }
         friendList.innerHTML = '';
-        for (const uid of friendUids) {
-            const friendData = await getPlayerInfo(uid);
+        const friendDataPromises = friendUids.map(uid => getPlayerInfo(uid));
+        const friendsData = await Promise.all(friendDataPromises);
+        friendsData.forEach(friendData => {
             const onlineStatus = friendData.online ? 'online' : '';
             const li = document.createElement('li');
-            li.innerHTML = `<div class="online-status ${onlineStatus}"></div><img src="${friendData.photoURL}" class="list-item-img"><div class="list-item-name">${friendData.displayName}</div><div class="list-actions"><button class="btn-challenge-friend" data-uid="${uid}" ${!friendData.online || friendData.isPlaying ? 'disabled' : ''}>Play</button><button class="btn-remove-friend btn-secondary" data-uid="${uid}">Remove</button></div>`;
+            li.innerHTML = `<div class="online-status ${onlineStatus}"></div><img src="${friendData.photoURL}" class="list-item-img"><div class="list-item-name">${friendData.displayName}</div><div class="list-actions"><button class="btn-challenge-friend" data-uid="${friendData.uid}" ${!friendData.online || friendData.isPlaying ? 'disabled' : ''}>Play</button><button class="btn-remove-friend btn-secondary" data-uid="${friendData.uid}">Remove</button></div>`;
             friendList.appendChild(li);
-        }
+        });
         document.querySelectorAll('.btn-challenge-friend').forEach(b => b.onclick = (e) => sendChallenge(e.target.dataset.uid));
         document.querySelectorAll('.btn-remove-friend').forEach(b => b.onclick = (e) => removeFriend(e.target.dataset.uid));
     }
@@ -512,71 +472,29 @@
         db.ref(`users/${currentUser.uid}/friends/${friendUid}`).remove();
         db.ref(`users/${friendUid}/friends/${currentUser.uid}`).remove();
     }
-
-    // --- FRIEND CHALLENGE SYSTEM ---
     async function sendChallenge(friendUid) {
         const myData = await getPlayerInfo(currentUser.uid);
-        const invite = {
-            from: currentUser.uid,
-            displayName: myData.displayName,
-            photoURL: myData.photoURL
-        };
+        const invite = { from: currentUser.uid, displayName: myData.displayName, photoURL: myData.photoURL };
         db.ref(`gameInvites/${friendUid}`).set(invite);
         alert(`Challenge sent! Waiting for response...`);
     }
     async function showChallengePopup(invite) {
         const content = document.getElementById('challenge-popup-content');
-        content.innerHTML = `
-            <h2>Game Challenge!</h2>
-            <img src="${invite.photoURL}" style="width: 80px; height: 80px; border-radius: 50%;">
-            <p><strong>${invite.displayName}</strong> has challenged you to a game.</p>
-            <div class="popup-buttons">
-                <button id="accept-challenge-btn" data-uid="${invite.from}">Accept</button>
-                <button id="decline-challenge-btn" data-uid="${invite.from}" class="btn-secondary">Decline</button>
-            </div>
-        `;
+        content.innerHTML = `<h2>Game Challenge!</h2><img src="${invite.photoURL}" style="width: 80px; height: 80px; border-radius: 50%;"><p><strong>${invite.displayName}</strong> has challenged you to a game.</p><div class="popup-buttons"><button id="accept-challenge-btn" data-uid="${invite.from}">Accept</button><button id="decline-challenge-btn" class="btn-secondary">Decline</button></div>`;
         showPopup('challenge-popup');
-        document.getElementById('accept-challenge-btn').onclick = (e) => {
-            createGame(e.target.dataset.uid, currentUser.uid, true);
-        };
-        document.getElementById('decline-challenge-btn').onclick = () => {
-            db.ref(`gameInvites/${currentUser.uid}`).remove();
-        };
+        document.getElementById('accept-challenge-btn').onclick = (e) => { createGame(e.target.dataset.uid, currentUser.uid, true); };
+        document.getElementById('decline-challenge-btn').onclick = () => { db.ref(`gameInvites/${currentUser.uid}`).remove(); };
     }
     
-    // --- PROFILE, LEADERBOARD, AND OTHER UI ---
-    function updateLeaderboardUI(elementId, users) { /* code from previous response */ }
-    async function showOpponentProfile(uid) { /* code from previous response */ }
-    document.getElementById('login-btn').addEventListener('click', () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch(e => console.error(e)); });
-    document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
-    // ... all other event listeners
-    function updateLeaderboardUI(elementId, users) {
-        const list = document.getElementById(elementId); list.innerHTML = '';
-        users.forEach((u, index) => {
-            const rank = index + 1; const li = document.createElement('li');
-            li.classList.toggle('rank-1', rank === 1); li.classList.toggle('rank-2', rank === 2); li.classList.toggle('rank-3', rank === 3);
-            li.innerHTML = `<span class="list-item-rank">${rank}</span><img src="${u.photoURL}" class="list-item-img"><div class="list-item-name">${u.displayName}</div><span class="list-item-wins">${u.stats?.wins || 0} Wins</span>`;
-            list.appendChild(li);
-        });
-    }
-    async function showOpponentProfile(uid) {
-        const userData = await getPlayerInfo(uid); const rank = sortedUsersCache.findIndex(u => u.uid === uid) + 1;
-        const isFriend = myFriendsCache[uid];
-        const addFriendBtnHTML = uid !== currentUser.uid ? `<button id="popup-add-friend-btn" data-uid="${uid}" ${isFriend ? 'disabled' : ''}>${isFriend ? 'Already Friends' : 'Add Friend'}</button>` : '';
-        const content = document.getElementById('opponent-profile-content');
-        content.innerHTML = `<div class="profile-header" style="gap: 5px;"><img src="${userData.photoURL}" style="width: 80px; height: 80px; cursor: default;"><h2>${userData.displayName}</h2><p>Rank: <strong>${rank > 0 ? rank : 'N/A'}</strong></p></div><div class="stats-grid"><div>Wins<span>${userData.stats?.wins || 0}</span></div><div>Losses<span>${userData.stats?.losses || 0}</span></div><div>Draws<span>${userData.stats?.draws || 0}</span></div></div>${addFriendBtnHTML}<button id="close-opponent-popup" class="btn-secondary">Close</button>`;
-        showPopup('opponent-profile-popup');
-        document.getElementById('close-opponent-popup').onclick = () => showPopup('opponent-profile-popup', false);
-        if (uid !== currentUser.uid && !isFriend) { document.getElementById('popup-add-friend-btn').onclick = (e) => sendFriendRequest(e.target.dataset.uid); }
-    }
-    
-    // All other button event listeners
+    // --- PROFILE & OTHER UI EVENT LISTENERS ---
     document.getElementById('profile-btn').addEventListener('click', () => {
         const myRank = sortedUsersCache.findIndex(u => u.uid === currentUser.uid) + 1;
         const myData = sortedUsersCache.find(u => u.uid === currentUser.uid);
         if (!myData) return;
+        const badge = getRankBadge(myRank); // MODIFIED
         document.getElementById('profile-photo').src = myData.photoURL;
         document.getElementById('profile-name-display').textContent = myData.displayName;
+        document.getElementById('profile-badge').textContent = badge; // MODIFIED
         document.getElementById('edit-name-input').value = myData.displayName;
         document.getElementById('profile-rank').textContent = myRank > 0 ? myRank : 'N/A';
         document.getElementById('profile-uid').textContent = myData.uid;
@@ -586,14 +504,28 @@
         document.getElementById('profile-draws').textContent = myData.stats?.draws || 0;
         showScreen('profile-screen');
     });
-    document.getElementById('save-profile-btn').addEventListener('click', () => {
-        const newName = document.getElementById('edit-name-input').value.trim();
-        if (newName) db.ref(`users/${currentUser.uid}`).update({ displayName: newName }).then(() => alert('Profile updated!'));
-    });
+    
+    // MODIFIED: Added badge to opponent profile
+    async function showOpponentProfile(uid) {
+        const userData = await getPlayerInfo(uid); 
+        const rank = sortedUsersCache.findIndex(u => u.uid === uid) + 1;
+        const badge = getRankBadge(rank);
+        const isFriend = myFriendsCache[uid];
+        const addFriendBtnHTML = uid !== currentUser.uid ? `<button id="popup-add-friend-btn" data-uid="${uid}" ${isFriend ? 'disabled' : ''}>${isFriend ? 'Already Friends' : 'Add Friend'}</button>` : '';
+        const content = document.getElementById('opponent-profile-content');
+        content.innerHTML = `<div class="profile-header" style="gap: 5px;"><img src="${userData.photoURL}" style="width: 80px; height: 80px; cursor: default;"><h2>${userData.displayName}<span class="profile-badge">${badge}</span></h2><p>Rank: <strong>${rank > 0 ? rank : 'N/A'}</strong></p></div><div class="stats-grid"><div>Wins<span>${userData.stats?.wins || 0}</span></div><div>Losses<span>${userData.stats?.losses || 0}</span></div><div>Draws<span>${userData.stats?.draws || 0}</span></div></div>${addFriendBtnHTML}<button id="close-opponent-popup" class="btn-secondary">Close</button>`;
+        showPopup('opponent-profile-popup');
+        document.getElementById('close-opponent-popup').onclick = () => showPopup('opponent-profile-popup', false);
+        if (uid !== currentUser.uid && !isFriend) { document.getElementById('popup-add-friend-btn').onclick = (e) => sendFriendRequest(e.target.dataset.uid); }
+    }
+
+    // Other listeners
+    document.getElementById('login-btn').addEventListener('click', () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch(e => console.error(e)); });
+    document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+    document.getElementById('save-profile-btn').addEventListener('click', () => { const newName = document.getElementById('edit-name-input').value.trim(); if (newName) db.ref(`users/${currentUser.uid}`).update({ displayName: newName }).then(() => alert('Profile updated!')); });
     document.getElementById('profile-photo').addEventListener('click', () => document.getElementById('photo-upload-input').click());
     document.getElementById('photo-upload-input').addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file || !IMGBB_API_KEY) return;
+        const file = event.target.files[0]; if (!file || !IMGBB_API_KEY) return;
         showPopup('image-upload-popup'); const formData = new FormData(); formData.append("image", file);
         fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData })
         .then(res => res.json()).then(result => {
@@ -626,4 +558,4 @@
     document.querySelector('.social-telegram').href = socialLinks.telegram; document.querySelector('.social-facebook').href = socialLinks.facebook; document.querySelector('.social-youtube').href = socialLinks.youtube; document.querySelector('.social-instagram').href = socialLinks.instagram;
     </script>
 </body>
-</html>
+                </html>
